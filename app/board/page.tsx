@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import ChessSocketService from "@/components/ChessSocketService";
 import { useChessStore } from "@/store/useChessStore";
 import { Chessboard, PieceDropHandlerArgs, SquareHandlerArgs } from "react-chessboard";
 
@@ -52,7 +52,9 @@ export default function BoardPage() {
 
   return (
     <main className="flex items-center justify-center min-h-screen bg-slate-900">
+      <ChessSocketService gameId="session-123" />
       <div className="w-full max-w-150 p-4 bg-slate-800  shadow-2xl">
+        <StatusBadge />
         {/*{isGameOver && (
                   <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
                     <h2 className="text-3xl font-bold text-white mb-4">{gameResult}</h2>
@@ -69,5 +71,24 @@ export default function BoardPage() {
         />
       </div>
     </main>
+  );
+}
+
+function StatusBadge() {
+  const status = useChessStore((state) => state.status);
+  const colors = {
+    connected: "bg-green-500",
+    connecting: "bg-yellow-500",
+    disconnected: "bg-red-500",
+    error: "bg-red-700",
+  };
+
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <div className={`w-2 h-2 rounded-full ${colors[status]} animate-pulse`} />
+      <span className="text-xs text-slate-300 uppercase tracking-widest font-bold">
+        {status}
+      </span>
+    </div>
   );
 }
