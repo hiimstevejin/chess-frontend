@@ -1,7 +1,10 @@
 "use client";
 
+import GameOver from "@/components/board/GameOver";
+import StatusBadge from "@/components/board/StatusBadge";
 import ChessSocketService from "@/components/ChessSocketService";
 import { useChessStore } from "@/store/useChessStore";
+import { Square } from "chess.js";
 import { Chessboard, PieceDropHandlerArgs, SquareHandlerArgs } from "react-chessboard";
 
 export default function BoardPage() {
@@ -11,6 +14,7 @@ export default function BoardPage() {
   function onPieceDrop({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs) {
     if (piece.pieceType[0] === "b") return false
     if (!isPlayerTurn) return false;
+    if (!targetSquare) return false;
     return makeMove(sourceSquare, targetSquare);
   }
 
@@ -26,7 +30,7 @@ export default function BoardPage() {
 
     if (!moveFrom) {
       if (piece && piece.pieceType[0] === "w") {
-        highlightMoves(square as any);
+        highlightMoves(square as Square);
       }
       return;
     }
@@ -55,40 +59,11 @@ export default function BoardPage() {
       <ChessSocketService gameId="session-123" />
       <div className="w-full max-w-150 p-4 bg-slate-800  shadow-2xl">
         <StatusBadge />
-        {isGameOver && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <h2 className="text-3xl font-bold text-white mb-4">{gameResult}</h2>
-                    <button
-                      onClick={resetGame}
-                      className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition"
-                    >
-                      Play Again
-                    </button>
-                  </div>
-                )}
+        <GameOver/>
         <Chessboard
         options={chessboardOptions}
         />
       </div>
     </main>
-  );
-}
-
-function StatusBadge() {
-  const status = useChessStore((state) => state.status);
-  const colors = {
-    connected: "bg-green-500",
-    connecting: "bg-yellow-500",
-    disconnected: "bg-red-500",
-    error: "bg-red-700",
-  };
-
-  return (
-    <div className="flex items-center gap-2 mb-4">
-      <div className={`w-2 h-2 rounded-full ${colors[status]} animate-pulse`} />
-      <span className="text-xs text-slate-300 uppercase tracking-widest font-bold">
-        {status}
-      </span>
-    </div>
   );
 }
