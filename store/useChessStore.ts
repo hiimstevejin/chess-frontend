@@ -89,6 +89,7 @@ export const useChessStore = create<ChessStore>((set, get) => ({
         history: [],
         moveFrom: "",
         optionSquares: {},
+        isGameOver: false
       });
   },
 

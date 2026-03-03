@@ -55,7 +55,7 @@ export default function BoardPage() {
       <ChessSocketService gameId="session-123" />
       <div className="w-full max-w-150 p-4 bg-slate-800  shadow-2xl">
         <StatusBadge />
-        {/*{isGameOver && (
+        {isGameOver && (
                   <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
                     <h2 className="text-3xl font-bold text-white mb-4">{gameResult}</h2>
                     <button
@@ -65,7 +65,7 @@ export default function BoardPage() {
                       Play Again
                     </button>
                   </div>
-                )}*/}
+                )}
         <Chessboard
         options={chessboardOptions}
         />
