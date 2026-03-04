@@ -19,7 +19,8 @@ interface ChessStore {
   // Actions
   setSocket: (socket: WebSocket | null) => void;
   setStatus: (status: ConnectionStatus) => void;
-  makeMove: (source: string, target: string) => boolean;
+  makeMove: (source: string, target: string, promotion?: string) => boolean;
+  isPromotion: (source: string, target: string) => boolean;
   applyEngineMove: (move: string) => void;
   highlightMoves: (square: Square | null) => void;
   checkStatus: () => void;
@@ -39,11 +40,11 @@ export const useChessStore = create<ChessStore>((set, get) => ({
   setSocket: (socket) => set({ socket }),
   setStatus: (status) => set({ status }),
 
-  makeMove: (source, target) => {
+  makeMove: (source, target, promotion ="q") => {
     if (get().isGameOver || game.turn() !== "w") return false;
 
     try {
-      const move = game.move({ from: source, to: target, promotion: "q" });
+      const move = game.move({ from: source, to: target, promotion: promotion });
 
       if (move) {
         const newFen = game.fen();
@@ -68,6 +69,14 @@ export const useChessStore = create<ChessStore>((set, get) => ({
     } catch (e) { return false; }
     return false;
   },
+
+  isPromotion: (source, target) => {
+      const piece = game.get(source as Square);
+      if (!piece || piece.type !== "p") return false;
+
+      const moves = game.moves({ square: source as Square, verbose: true });
+      return moves.some(m => m.to === target && m.isPromotion);
+    },
 
   applyEngineMove: (move) => {
       try {
