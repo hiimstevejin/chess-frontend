@@ -3,7 +3,7 @@
 import GameOver from "@/components/board/GameOver";
 import PromotionSelection from "@/components/board/PromotionSelection";
 import StatusBadge from "@/components/board/StatusBadge";
-import ChessSocketService from "@/components/ChessSocketService";
+import { useChessSocket } from "@/hooks/useChessSocket";
 import { useChessStore } from "@/store/useChessStore";
 import { Square } from "chess.js";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,6 +11,9 @@ import { Chessboard, PieceDropHandlerArgs, SquareHandlerArgs } from "react-chess
 
 export default function BoardPage() {
   const { fen, optionSquares, moveFrom, makeMove, highlightMoves, isPromotion, isGameOver, gameResult, resetGame } = useChessStore();
+
+  useChessSocket("session-123");
+
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardWidth, setBoardWidth] = useState(0);
@@ -95,7 +98,6 @@ export default function BoardPage() {
 
   return (
     <main className="flex items-center justify-center min-h-screen bg-slate-900">
-      <ChessSocketService gameId="session-123" />
       <div className="w-full max-w-150 p-4 bg-slate-800  shadow-2xl">
         <StatusBadge />
         <GameOver/>

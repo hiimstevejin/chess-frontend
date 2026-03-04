@@ -1,38 +1,55 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useChessStore } from '@/store/useChessStore';
 
 export const useChessSocket = (gameId: string) => {
-  const applyEngineMove = useChessStore((s) => s.applyEngineMove);
-  const setStatus = useChessStore((s) => s.setStatus);
+  const { setSocket, setStatus, applyEngineMove } = useChessStore();
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://localhost:8000/ws/game/${gameId}`);
+    setStatus("connecting");
+    const ws = new WebSocket(`ws://127.0.0.1:8000/ws/game/${gameId}`);
     socketRef.current = ws;
 
-    ws.onopen = () => setStatus("connected");
+    ws.onopen = () => {
+      setStatus("connected");
+      setSocket(ws)
+    }
+
     ws.onclose = () => setStatus("disconnected");
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "ENGINE_MOVE") {
-        applyEngineMove(data.move);
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "ENGINE_MOVE") {
+          applyEngineMove(data.move);
+        }
+
+        if (data.type === "ERROR") {
+          console.error("Backend Error:", data.message);
+        }
+      } catch (err) {
+        console.error("Failed to parse WebSocket message", err)
       }
+
     };
 
+    ws.onerror = () => {
+      setStatus("error");
+    }
     // Store the socket globally or in a way makeMove can access it
     // Or just pass the send function to the store
 
-    return () => {
-      ws.close();
-      socketRef.current = null;
+    ws.onclose = () => {
+      console.log("Disconnected from Cerberus");
+      setStatus("disconnected");
+      setSocket(null);
     };
-  }, [gameId, applyEngineMove, setStatus]);
 
-  const sendMove = (move: string, fen: string) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({ move, fen }));
-    }
-  };
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close()
+      }
+    };
+  }, [gameId, setSocket, applyEngineMove, setStatus]);
 
-  return { sendMove };
+  return {};
 };
