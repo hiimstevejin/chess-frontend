@@ -45,9 +45,9 @@ export const useChessSocket = (gameId: string) => {
     };
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.close()
-      }
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+            ws.close();
+          }
     };
   }, [gameId, setSocket, applyEngineMove, setStatus]);
 
