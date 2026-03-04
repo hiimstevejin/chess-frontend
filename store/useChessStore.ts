@@ -4,6 +4,10 @@ import { Chess, Square } from "chess.js";
 
 const game = new Chess();
 
+// To load sample fen for testing
+// const a = "8/5P2/8/8/8/7K/8/k7 w - - 0 1"
+// game.load(a)
+
 type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 
 interface ChessStore {

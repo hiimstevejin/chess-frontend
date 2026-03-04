@@ -1,21 +1,53 @@
 "use client";
 
 import GameOver from "@/components/board/GameOver";
+import PromotionSelection from "@/components/board/PromotionSelection";
 import StatusBadge from "@/components/board/StatusBadge";
 import ChessSocketService from "@/components/ChessSocketService";
 import { useChessStore } from "@/store/useChessStore";
 import { Square } from "chess.js";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Chessboard, PieceDropHandlerArgs, SquareHandlerArgs } from "react-chessboard";
 
 export default function BoardPage() {
-  const { fen, optionSquares, moveFrom, makeMove, highlightMoves, isGameOver, gameResult, resetGame } = useChessStore();
+  const { fen, optionSquares, moveFrom, makeMove, highlightMoves, isPromotion, isGameOver, gameResult, resetGame } = useChessStore();
+  const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [boardWidth, setBoardWidth] = useState(0);
+
+  useEffect(() => {
+    if (boardRef.current) {
+      setBoardWidth(boardRef.current.offsetWidth);
+    }
+  }, []);
+
+  const { menuLeft, squareWidth } = useMemo(() => {
+      if (!pendingPromotion || boardWidth === 0) return { menuLeft: 0, squareWidth: 0 };
+
+      const singleSquareWidth = boardWidth / 8;
+      const colIndex = pendingPromotion.to.charCodeAt(0) - 'a'.charCodeAt(0);
+
+      return {
+        menuLeft: colIndex * singleSquareWidth,
+        squareWidth: singleSquareWidth
+      };
+    }, [pendingPromotion, boardWidth])
+
   const isPlayerTurn = fen.split(" ")[1] === "w";
+
+  function handleMove(source: string, target: string) {
+    if (isPromotion(source, target)) {
+      setPendingPromotion({ from: source, to: target });
+      return true;
+    }
+    return makeMove(source, target);
+  }
 
   function onPieceDrop({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs) {
     if (piece.pieceType[0] === "b") return false
     if (!isPlayerTurn) return false;
     if (!targetSquare) return false;
-    return makeMove(sourceSquare, targetSquare);
+    return handleMove(sourceSquare, targetSquare);
   }
 
 
@@ -35,12 +67,19 @@ export default function BoardPage() {
       return;
     }
 
-    const moveSuccess = makeMove(moveFrom, square);
+    const moveSuccess = handleMove(moveFrom, square);
     if (!moveSuccess) {
       // If move failed, try to select the new square if it's a white piece
-      highlightMoves(piece && piece.pieceType[0] === "w" ? (square as any) : null);
+      highlightMoves(piece && piece.pieceType[0] === "w" ? (square as Square) : null);
     } else {
       highlightMoves(null);
+    }
+  }
+
+  const selectPromotion = (piece: string) => {
+    if (pendingPromotion) {
+      makeMove(pendingPromotion.from, pendingPromotion.to, piece);
+      setPendingPromotion(null);
     }
   }
 
@@ -60,9 +99,15 @@ export default function BoardPage() {
       <div className="w-full max-w-150 p-4 bg-slate-800  shadow-2xl">
         <StatusBadge />
         <GameOver/>
-        <Chessboard
-        options={chessboardOptions}
-        />
+        <div ref={boardRef} className="relative">
+          <Chessboard options={chessboardOptions} />
+          <PromotionSelection
+            pendingPromotion={pendingPromotion}
+            setPendingPromotion={setPendingPromotion}
+            menuLeft={menuLeft} squareWidth={squareWidth}
+            selectPromotion={selectPromotion}
+          />
+        </div>
       </div>
     </main>
   );
