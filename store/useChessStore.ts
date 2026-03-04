@@ -99,7 +99,11 @@ export const useChessStore = create<ChessStore>((set, get) => ({
   },
 
   resetGame: () => {
-      game.reset();
+    game.reset();
+    const socket = get().socket;
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "RESET" })); 
+      }
       set({
         fen: game.fen(),
         history: [],
