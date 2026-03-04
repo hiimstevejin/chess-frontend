@@ -54,7 +54,7 @@ export const useChessStore = create<ChessStore>((set, get) => ({
         const newFen = game.fen();
         set({
           fen: newFen,
-          history: [...get().history, move.san],
+          history: [...get().history, move.lan],
           moveFrom: "",
           optionSquares: {},
         });
@@ -63,7 +63,7 @@ export const useChessStore = create<ChessStore>((set, get) => ({
         const socket = get().socket;
         if (socket?.readyState === WebSocket.OPEN) {
           socket.send(JSON.stringify({
-            move: move.san,
+            move: move.lan,
             fen: newFen
           }));
         }
