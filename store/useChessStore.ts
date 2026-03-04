@@ -78,6 +78,9 @@ export const useChessStore = create<ChessStore>((set, get) => ({
       const piece = game.get(source as Square);
       if (!piece || piece.type !== "p") return false;
 
+      const isCorrectRank = (piece.color === 'w' && target[1] === '8') || (piece.color === 'b' && target[1] === '1');
+
+      if (!isCorrectRank) return false;
       const moves = game.moves({ square: source as Square, verbose: true });
       return moves.some(m => m.to === target && m.isPromotion);
     },
