@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useChessStore } from '@/store/useChessStore';
 
 export const useChessSocket = (gameId: string) => {
