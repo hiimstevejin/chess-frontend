@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import RandomBoard from "./RandomBoard";
 
-export default function BackgroundBoards() {
+export default memo(function BackgroundBoards() {
   const [dimensions, setDimensions] = useState({ cols: 0, rows: 0 });
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export default function BackgroundBoards() {
       const cols = Math.ceil(window.innerWidth / (boardSize + gap));
       const rows = Math.ceil(window.innerHeight / (boardSize + gap));
 
-      setDimensions(prev => ({
+      setDimensions((prev) => ({
         // Only increase dimensions to prevent unmounting/resetting boards on window shrink
         cols: Math.max(prev.cols, cols + 1),
         rows: Math.max(prev.rows, rows + 1),
@@ -22,8 +22,8 @@ export default function BackgroundBoards() {
     };
 
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
   if (dimensions.cols === 0) return null;
@@ -36,7 +36,7 @@ export default function BackgroundBoards() {
         className="grid gap-4"
         style={{
           gridTemplateColumns: `repeat(${dimensions.cols}, 300px)`,
-          gridTemplateRows: `repeat(${dimensions.rows}, 300px)`
+          gridTemplateRows: `repeat(${dimensions.rows}, 300px)`,
         }}
       >
         {boards.map((_, i) => (
@@ -47,4 +47,4 @@ export default function BackgroundBoards() {
       </div>
     </div>
   );
-}
+});
