@@ -7,18 +7,36 @@ import { useChessSocket } from "@/hooks/useChessSocket";
 import { useChessStore } from "@/store/useChessStore";
 import { Square } from "chess.js";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Chessboard, PieceDropHandlerArgs, SquareHandlerArgs } from "react-chessboard";
+import {
+  Chessboard,
+  PieceDropHandlerArgs,
+  SquareHandlerArgs,
+} from "react-chessboard";
 
 interface ChessGameProps {
   gameId: string;
+  mode: string;
 }
 
-export default function ChessGame({gameId}:ChessGameProps) {
-  const { fen, optionSquares, moveFrom, makeMove, highlightMoves, isPromotion, isGameOver, gameResult, resetGame } = useChessStore();
+export default function ChessGame({ gameId, mode }: ChessGameProps) {
+  const {
+    fen,
+    optionSquares,
+    moveFrom,
+    makeMove,
+    highlightMoves,
+    isPromotion,
+    isGameOver,
+    gameResult,
+    resetGame,
+  } = useChessStore();
 
-  useChessSocket(gameId);
+  useChessSocket(gameId, mode);
 
-  const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
+  const [pendingPromotion, setPendingPromotion] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const [boardWidth, setBoardWidth] = useState(0);
 
@@ -29,16 +47,17 @@ export default function ChessGame({gameId}:ChessGameProps) {
   }, []);
 
   const { menuLeft, squareWidth } = useMemo(() => {
-      if (!pendingPromotion || boardWidth === 0) return { menuLeft: 0, squareWidth: 0 };
+    if (!pendingPromotion || boardWidth === 0)
+      return { menuLeft: 0, squareWidth: 0 };
 
-      const singleSquareWidth = boardWidth / 8;
-      const colIndex = pendingPromotion.to.charCodeAt(0) - 'a'.charCodeAt(0);
+    const singleSquareWidth = boardWidth / 8;
+    const colIndex = pendingPromotion.to.charCodeAt(0) - "a".charCodeAt(0);
 
-      return {
-        menuLeft: colIndex * singleSquareWidth,
-        squareWidth: singleSquareWidth
-      };
-    }, [pendingPromotion, boardWidth])
+    return {
+      menuLeft: colIndex * singleSquareWidth,
+      squareWidth: singleSquareWidth,
+    };
+  }, [pendingPromotion, boardWidth]);
 
   const isPlayerTurn = fen.split(" ")[1] === "w";
 
@@ -50,8 +69,12 @@ export default function ChessGame({gameId}:ChessGameProps) {
     return makeMove(source, target);
   }
 
-  function onPieceDrop({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs) {
-    if (piece.pieceType[0] === "b") return false
+  function onPieceDrop({
+    sourceSquare,
+    targetSquare,
+    piece,
+  }: PieceDropHandlerArgs) {
+    if (piece.pieceType[0] === "b") return false;
     if (!isPlayerTurn) return false;
     if (!targetSquare) return false;
     return handleMove(sourceSquare, targetSquare);
@@ -76,7 +99,9 @@ export default function ChessGame({gameId}:ChessGameProps) {
     const moveSuccess = handleMove(moveFrom, square);
     if (!moveSuccess) {
       // If move failed, try to select the new square if it's a white piece
-      highlightMoves(piece && piece.pieceType[0] === "w" ? (square as Square) : null);
+      highlightMoves(
+        piece && piece.pieceType[0] === "w" ? (square as Square) : null,
+      );
     } else {
       highlightMoves(null);
     }
@@ -87,7 +112,7 @@ export default function ChessGame({gameId}:ChessGameProps) {
       makeMove(pendingPromotion.from, pendingPromotion.to, piece);
       setPendingPromotion(null);
     }
-  }
+  };
 
   const chessboardOptions = {
     id: "play-vs-random",
@@ -100,18 +125,19 @@ export default function ChessGame({gameId}:ChessGameProps) {
   };
 
   return (
-      <div className="flex flex-col gap-4">
-        <StatusBadge />
-        <GameOver/>
-        <div ref={boardRef} className="relative">
-          <Chessboard options={chessboardOptions} />
-          <PromotionSelection
-            pendingPromotion={pendingPromotion}
-            setPendingPromotion={setPendingPromotion}
-            menuLeft={menuLeft} squareWidth={squareWidth}
-            selectPromotion={selectPromotion}
-          />
-        </div>
+    <div className="flex flex-col gap-4">
+      <StatusBadge />
+      <GameOver />
+      <div ref={boardRef} className="relative">
+        <Chessboard options={chessboardOptions} />
+        <PromotionSelection
+          pendingPromotion={pendingPromotion}
+          setPendingPromotion={setPendingPromotion}
+          menuLeft={menuLeft}
+          squareWidth={squareWidth}
+          selectPromotion={selectPromotion}
+        />
       </div>
+    </div>
   );
 }

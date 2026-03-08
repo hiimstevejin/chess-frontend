@@ -10,7 +10,7 @@ export default function JoinGameForm() {
   const joinGame = (e: React.FormEvent) => {
     e.preventDefault();
     if (gameId.trim()) {
-      router.push(`/board/${gameId}`);
+      router.push(`/board/${gameId}?mode=player`);
     }
   };
 
@@ -21,11 +21,11 @@ export default function JoinGameForm() {
         placeholder="Enter Game ID"
         value={gameId}
         onChange={(e) => setGameId(e.target.value)}
-        className="p-2 rounded-lg bg-slate-800 border border-slate-700"
+        className="p-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none"
       />
       <button
         type="submit"
-        className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700"
+        className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 cursor-pointer"
       >
         Join
       </button>

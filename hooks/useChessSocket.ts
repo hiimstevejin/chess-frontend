@@ -1,19 +1,21 @@
-import { useEffect, useRef } from 'react';
-import { useChessStore } from '@/store/useChessStore';
+import { useEffect, useRef } from "react";
+import { useChessStore } from "@/store/useChessStore";
 
-export const useChessSocket = (gameId: string) => {
+export const useChessSocket = (gameId: string, mode: string) => {
   const { setSocket, setStatus, applyEngineMove } = useChessStore();
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     setStatus("connecting");
-    const ws = new WebSocket(`ws://127.0.0.1:8000/ws/game/${gameId}`);
+    const ws = new WebSocket(
+      `ws://127.0.0.1:8000/ws/game/${gameId}?mode=${mode}`,
+    );
     socketRef.current = ws;
 
     ws.onopen = () => {
       setStatus("connected");
-      setSocket(ws)
-    }
+      setSocket(ws);
+    };
 
     ws.onclose = () => setStatus("disconnected");
     ws.onmessage = (event) => {
@@ -27,14 +29,13 @@ export const useChessSocket = (gameId: string) => {
           console.error("Backend Error:", data.message);
         }
       } catch (err) {
-        console.error("Failed to parse WebSocket message", err)
+        console.error("Failed to parse WebSocket message", err);
       }
-
     };
 
     ws.onerror = () => {
       setStatus("error");
-    }
+    };
     // Store the socket globally or in a way makeMove can access it
     // Or just pass the send function to the store
 
@@ -45,11 +46,14 @@ export const useChessSocket = (gameId: string) => {
     };
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-            ws.close();
-          }
+      if (
+        ws.readyState === WebSocket.OPEN ||
+        ws.readyState === WebSocket.CONNECTING
+      ) {
+        ws.close();
+      }
     };
-  }, [gameId, setSocket, applyEngineMove, setStatus]);
+  }, [gameId, mode, setSocket, applyEngineMove, setStatus]);
 
   return {};
 };
