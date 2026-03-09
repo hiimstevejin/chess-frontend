@@ -16,9 +16,14 @@ import {
 interface ChessGameProps {
   gameId: string;
   mode: string;
+  initialColor?: string;
 }
 
-export default function ChessGame({ gameId, mode }: ChessGameProps) {
+export default function ChessGame({
+  gameId,
+  mode,
+  initialColor,
+}: ChessGameProps) {
   const {
     fen,
     optionSquares,
@@ -26,10 +31,18 @@ export default function ChessGame({ gameId, mode }: ChessGameProps) {
     makeMove,
     highlightMoves,
     isPromotion,
-    isGameOver,
-    gameResult,
-    resetGame,
+    playerColor,
+    setPlayerColor,
   } = useChessStore();
+
+  useEffect(() => {
+    // Set the explicitly requested color from URL query if provided
+    if (initialColor === "w" || initialColor === "b") {
+      setPlayerColor(initialColor);
+    } else {
+      setPlayerColor(null);
+    }
+  }, [initialColor, setPlayerColor]);
 
   useChessSocket(gameId, mode);
 
@@ -59,7 +72,7 @@ export default function ChessGame({ gameId, mode }: ChessGameProps) {
     };
   }, [pendingPromotion, boardWidth]);
 
-  const isPlayerTurn = fen.split(" ")[1] === "w";
+  const isPlayerTurn = playerColor ? fen.split(" ")[1] === playerColor : false;
 
   function handleMove(source: string, target: string) {
     if (isPromotion(source, target)) {
@@ -74,14 +87,14 @@ export default function ChessGame({ gameId, mode }: ChessGameProps) {
     targetSquare,
     piece,
   }: PieceDropHandlerArgs) {
-    if (piece.pieceType[0] === "b") return false;
+    if (!playerColor || piece.pieceType[0] !== playerColor) return false;
     if (!isPlayerTurn) return false;
     if (!targetSquare) return false;
     return handleMove(sourceSquare, targetSquare);
   }
 
   function onSquareClick({ square, piece }: SquareHandlerArgs) {
-    if (!square || !isPlayerTurn) return;
+    if (!square || !isPlayerTurn || !playerColor) return;
 
     // If clicking the same square again, deselect
     if (moveFrom === square) {
@@ -90,7 +103,7 @@ export default function ChessGame({ gameId, mode }: ChessGameProps) {
     }
 
     if (!moveFrom) {
-      if (piece && piece.pieceType[0] === "w") {
+      if (piece && piece.pieceType[0] === playerColor) {
         highlightMoves(square as Square);
       }
       return;
@@ -98,9 +111,9 @@ export default function ChessGame({ gameId, mode }: ChessGameProps) {
 
     const moveSuccess = handleMove(moveFrom, square);
     if (!moveSuccess) {
-      // If move failed, try to select the new square if it's a white piece
+      // If move failed, try to select the new square if it's our piece
       highlightMoves(
-        piece && piece.pieceType[0] === "w" ? (square as Square) : null,
+        piece && piece.pieceType[0] === playerColor ? (square as Square) : null,
       );
     } else {
       highlightMoves(null);
@@ -120,7 +133,7 @@ export default function ChessGame({ gameId, mode }: ChessGameProps) {
     onPieceDrop,
     onSquareClick,
     squareStyles: optionSquares,
-    boardOrientation: "white" as const,
+    boardOrientation: (playerColor === "b" ? "black" : "white") as const,
     arePiecesDraggable: isPlayerTurn,
   };
 
@@ -136,6 +149,7 @@ export default function ChessGame({ gameId, mode }: ChessGameProps) {
           menuLeft={menuLeft}
           squareWidth={squareWidth}
           selectPromotion={selectPromotion}
+          color={playerColor}
         />
       </div>
     </div>

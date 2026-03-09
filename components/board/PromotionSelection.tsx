@@ -6,10 +6,18 @@ interface PromotionSelectionProps {
   menuLeft: number;
   squareWidth: number;
   selectPromotion: (piece: string) => void;
+  color: "w" | "b" | null;
 }
 
-export default function PromotionSelection({ pendingPromotion, setPendingPromotion, menuLeft, squareWidth, selectPromotion }:PromotionSelectionProps) {
-  if (pendingPromotion) {
+export default function PromotionSelection({
+  pendingPromotion,
+  setPendingPromotion,
+  menuLeft,
+  squareWidth,
+  selectPromotion,
+  color,
+}: PromotionSelectionProps) {
+  if (pendingPromotion && color) {
     return (
       <>
         <div
@@ -18,40 +26,43 @@ export default function PromotionSelection({ pendingPromotion, setPendingPromoti
         />
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: menuLeft,
             width: squareWidth,
             zIndex: 20,
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: 'white',
-            boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.5)'
+            display: "flex",
+            flexDirection: "column",
+            backgroundColor: "white",
+            boxShadow: "0 0 10px 0 rgba(0, 0, 0, 0.5)",
           }}
         >
-          {['q', 'r', 'n', 'b'].map((p) => (
+          {["q", "r", "n", "b"].map((p) => (
             <button
               key={p}
               onClick={() => selectPromotion(p)}
               style={{
-                width: '100%',
-                aspectRatio: '1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: 'none',
-                cursor: 'pointer'
+                width: "100%",
+                aspectRatio: "1",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "none",
+                cursor: "pointer",
               }}
               className="hover:bg-slate-200 transition"
             >
               <span className="text-3xl text-black">
-                {defaultPieces[`w${p.toUpperCase()}` as keyof PieceRenderObject]()}
+                {defaultPieces[
+                  `${color}${p.toUpperCase()}` as keyof PieceRenderObject
+                ]()}
               </span>
             </button>
           ))}
         </div>
       </>
-    )
+    );
   }
 
+  return null;
 }

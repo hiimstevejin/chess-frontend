@@ -9,11 +9,12 @@ export default async function BoardPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
   const mode = (resolvedSearchParams.mode as string) || "player";
+  const color = (resolvedSearchParams.color as string) || undefined;
 
   return (
     <main className="flex items-center justify-center min-h-screen bg-slate-900">
       <div className="w-full max-w-150 p-4 bg-slate-800 shadow-2xl">
-        <ChessGame gameId={id} mode={mode} />
+        <ChessGame gameId={id} mode={mode} initialColor={color} />
       </div>
     </main>
   );

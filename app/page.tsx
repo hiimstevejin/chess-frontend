@@ -13,12 +13,14 @@ export default function Home() {
 
   const handleJoinGameAgainstBot = () => {
     const newId = uuidv4();
-    router.push(`/board/${newId}?mode=bot`);
+    const color = Math.random() > 0.5 ? "w" : "b";
+    router.push(`/board/${newId}?mode=bot&color=${color}`);
   };
 
   const handleJoinGameAgainstPlayer = () => {
     const newId = uuidv4();
-    router.push(`/board/${newId}?mode=player`);
+    const color = Math.random() > 0.5 ? "w" : "b";
+    router.push(`/board/${newId}?mode=player&color=${color}`);
   };
 
   return (
