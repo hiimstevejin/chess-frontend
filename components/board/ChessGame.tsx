@@ -33,7 +33,12 @@ export default function ChessGame({
     isPromotion,
     playerColor,
     setPlayerColor,
+    initNewGame,
   } = useChessStore();
+
+  useEffect(() => {
+    initNewGame();
+  }, [gameId, initNewGame]);
 
   useEffect(() => {
     // Set the explicitly requested color from URL query if provided

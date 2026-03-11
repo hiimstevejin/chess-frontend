@@ -27,6 +27,7 @@ interface ChessStore {
   highlightMoves: (square: Square | null) => void;
   checkStatus: () => void;
   resetGame: () => void;
+  initNewGame: () => void;
 }
 
 export const useChessStore = create<ChessStore>((set, get) => ({
@@ -120,6 +121,19 @@ export const useChessStore = create<ChessStore>((set, get) => ({
       moveFrom: "",
       optionSquares: {},
       isGameOver: false,
+      gameResult: null,
+    });
+  },
+
+  initNewGame: () => {
+    game.reset();
+    set({
+      fen: game.fen(),
+      history: [],
+      moveFrom: "",
+      optionSquares: {},
+      isGameOver: false,
+      gameResult: null,
     });
   },
 
