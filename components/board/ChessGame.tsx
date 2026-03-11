@@ -44,7 +44,7 @@ export default function ChessGame({
     }
   }, [initialColor, setPlayerColor]);
 
-  useChessSocket(gameId, mode);
+  useChessSocket(gameId, mode, initialColor);
 
   const [pendingPromotion, setPendingPromotion] = useState<{
     from: string;

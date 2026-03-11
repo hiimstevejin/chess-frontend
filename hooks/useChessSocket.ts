@@ -1,31 +1,26 @@
 import { useEffect, useRef } from "react";
 import { useChessStore } from "@/store/useChessStore";
 
-export const useChessSocket = (gameId: string, mode: string) => {
+export const useChessSocket = (
+  gameId: string,
+  mode: string,
+  initialColor?: string,
+) => {
   const { setSocket, setStatus, applyEngineMove, setPlayerColor } =
     useChessStore();
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     setStatus("connecting");
+    const colorParam = initialColor ? `&color=${initialColor}` : "";
     const ws = new WebSocket(
-      `ws://127.0.0.1:8000/ws/game/${gameId}?mode=${mode}`,
+      `ws://127.0.0.1:8000/ws/game/${gameId}?mode=${mode}${colorParam}`,
     );
     socketRef.current = ws;
 
     ws.onopen = () => {
       setStatus("connected");
       setSocket(ws);
-
-      // Color negotiation for multiplayer
-      const currentColor = useChessStore.getState().playerColor;
-      if (currentColor) {
-        ws.send(
-          JSON.stringify({ type: "ANNOUNCE_COLOR", color: currentColor }),
-        );
-      } else {
-        ws.send(JSON.stringify({ type: "REQUEST_COLOR" }));
-      }
     };
 
     ws.onclose = () => {
@@ -40,25 +35,10 @@ export const useChessSocket = (gameId: string, mode: string) => {
 
         if (data.type === "ENGINE_MOVE") {
           applyEngineMove(data.move);
-        } else if (data.type === "REQUEST_COLOR") {
-          // Send our color to the newly joined player
-          const myColor = useChessStore.getState().playerColor;
-          if (myColor) {
-            ws.send(
-              JSON.stringify({
-                type: "ASSIGN_COLOR",
-                color: myColor === "w" ? "b" : "w",
-              }),
-            );
-          }
-        } else if (
-          data.type === "ASSIGN_COLOR" ||
-          data.type === "PLAYER_COLOR"
-        ) {
-          // Receive color assignment from another player or server
-          const currentState = useChessStore.getState();
-          if (!currentState.playerColor) {
-            setPlayerColor(data.color);
+        } else if (data.type === "COLOR_ASSIGNED") {
+          setPlayerColor(data.color);
+          if (mode === "bot" && data.color === "b") {
+            ws.send(JSON.stringify({ type: "ANNOUNCE_COLOR", color: "b" }));
           }
         } else if (data.move && !data.type) {
           // Fallback if the backend broadcasts a bare `{ move, fen }` without type
@@ -83,7 +63,15 @@ export const useChessSocket = (gameId: string, mode: string) => {
         ws.close();
       }
     };
-  }, [gameId, mode, setSocket, applyEngineMove, setStatus, setPlayerColor]);
+  }, [
+    gameId,
+    mode,
+    initialColor,
+    setSocket,
+    applyEngineMove,
+    setStatus,
+    setPlayerColor,
+  ]);
 
   return {};
 };
