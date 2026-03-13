@@ -1,6 +1,7 @@
 "use client";
 
 import GameOver from "@/components/board/GameOver";
+import MoveHistory from "@/components/board/MoveHistory";
 import PromotionSelection from "@/components/board/PromotionSelection";
 import StatusBadge from "@/components/board/StatusBadge";
 import { useChessSocket } from "@/hooks/useChessSocket";
@@ -146,16 +147,22 @@ export default function ChessGame({
     <div className="flex flex-col gap-4">
       <StatusBadge />
       <GameOver />
-      <div ref={boardRef} className="relative">
-        <Chessboard options={chessboardOptions} />
-        <PromotionSelection
-          pendingPromotion={pendingPromotion}
-          setPendingPromotion={setPendingPromotion}
-          menuLeft={menuLeft}
-          squareWidth={squareWidth}
-          selectPromotion={selectPromotion}
-          color={playerColor}
-        />
+      <div className="grid gap-4 xl:grid-cols-[minmax(38rem,1fr)_18rem] xl:items-start">
+        <div
+          ref={boardRef}
+          className="relative mx-auto w-full max-w-3xl xl:mx-0 xl:max-w-none"
+        >
+          <Chessboard options={chessboardOptions} />
+          <PromotionSelection
+            pendingPromotion={pendingPromotion}
+            setPendingPromotion={setPendingPromotion}
+            menuLeft={menuLeft}
+            squareWidth={squareWidth}
+            selectPromotion={selectPromotion}
+            color={playerColor}
+          />
+        </div>
+        <MoveHistory />
       </div>
     </div>
   );

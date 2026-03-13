@@ -77,7 +77,7 @@ export const useChessStore = create<ChessStore>((set, get) => ({
         get().checkStatus();
         return true;
       }
-    } catch (e) {
+    } catch {
       return false;
     }
     return false;
@@ -104,7 +104,7 @@ export const useChessStore = create<ChessStore>((set, get) => ({
         history: [...get().history, move],
       });
       get().checkStatus();
-    } catch (e) {
+    } catch {
       console.error("Invalid engine move:", move);
     }
   },
