@@ -1,36 +1,220 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+\***\*\_\*\*** .** .\_** **\_**  
+\_ **\_ \| |** \_**\_ \_\_\_\_** **\_\_** | | **\_**/ \_**\_\_\_**  
+/ \ \/| | \_/ ** \ / \_**// **\_/ | |/ \ **\/ \_ \
+\ \_**| Y \ \_**/ \_** \ \_** \ | | | \ | ( <\_> )
+\_**\_** /**\_| /\_** >\_**\_ >\_\_** > |**_|_**| /**| \_\_**/
+\/ \/ \/ \/ \/ \/
 
-## Getting Started
+## Overview
 
-First, run the development server:
+Chess Info is a Next.js frontend for real-time chess play. It provides a landing page to create or join a game, a board page for live play, and WebSocket integration for either human-vs-human games or games against a backend engine.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The frontend owns the board UI and local move validation through `chess.js`. The backend is responsible for room coordination, color assignment, relaying moves, and engine responses in bot mode.
+
+## Features
+
+- Create a new game against another player or against a bot.
+- Generate a unique game room ID with `uuid`.
+- Join an existing player game by entering its room ID.
+- Randomize the creator's starting color and orient the board automatically.
+- Play in real time over WebSockets.
+- Validate legal moves locally with `chess.js`.
+- Show move history in paired turns.
+- Highlight legal destination squares on click.
+- Support pawn promotion with an in-board promotion picker.
+- Detect checkmate, draw, and stalemate locally.
+- Show connection state: `connecting`, `connected`, `disconnected`, or `error`.
+- Reset the game from the frontend and notify the backend.
+- Render animated decorative chessboards on the home page background.
+
+## Tech Stack
+
+- Next.js 16 with the App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Zustand for client state
+- `chess.js` for move validation and game-state rules
+- `react-chessboard` for board rendering
+- Native browser WebSockets for real-time communication
+
+## Project Structure
+
+```text
+app/
+  page.tsx              Home page
+  board/[id]/page.tsx   Game route
+components/
+  board/                Game UI components
+  home/                 Landing page UI
+hooks/
+  useChessSocket.ts     WebSocket lifecycle and message handling
+store/
+  useChessStore.ts      Board state, move logic, and game status
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How It Works
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Home page
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The home page lets the user:
 
-## Learn More
+- start a new player-vs-player game
+- start a new player-vs-bot game
+- join an existing player room by ID
 
-To learn more about Next.js, take a look at the following resources:
+When a new game is created, the frontend generates a UUID and redirects to:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```text
+/board/<game-id>?mode=player&color=w
+/board/<game-id>?mode=bot&color=b
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The `color` query param is randomized on creation. If a user joins an existing room manually, no color is passed and the backend assigns one after the socket connects.
 
-## Deploy on Vercel
+### Board page
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The board route loads `ChessGame`, which:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- resets local store state for the new game ID
+- applies any initial color passed from the URL
+- opens a WebSocket connection to the backend
+- renders the board, status badge, move list, promotion UI, and game-over overlay
+
+### Move handling
+
+Moves are validated locally with `chess.js`. On a valid move, the frontend:
+
+1. updates FEN and move history in Zustand
+2. sends the move and current FEN to the backend
+3. checks whether the game has ended
+
+Promotion is detected before the move is made. If needed, the UI pauses the move and asks the player to choose `q`, `r`, `n`, or `b`.
+
+### Real-time sync
+
+The frontend connects to:
+
+```text
+ws://127.0.0.1:8000/ws/game/<game-id>?mode=<mode>&color=<color>
+```
+
+Expected backend behavior:
+
+- `mode=player`: relay moves between both clients in the same room
+- `mode=bot`: receive player moves and respond with engine moves
+- assign colors and send a `COLOR_ASSIGNED` message immediately after connect
+- accept a `RESET` message when the user restarts the game
+
+Supported inbound messages currently include:
+
+- `COLOR_ASSIGNED`
+- `ENGINE_MOVE`
+- bare move payloads like `{ "move": "e7e5", "fen": "..." }`
+- `ERROR`
+
+If the human is black in bot mode, the frontend sends:
+
+```json
+{
+  "type": "ANNOUNCE_COLOR",
+  "color": "b"
+}
+```
+
+so the backend engine can make the first white move.
+
+## Setup
+
+### Requirements
+
+- Node.js 20+ recommended
+- `pnpm` installed globally
+- a backend WebSocket server running on `ws://127.0.0.1:8000`
+
+This repository already includes a `pnpm-lock.yaml`, so `pnpm` is the intended package manager.
+
+### Install dependencies
+
+```bash
+pnpm install
+```
+
+### Start the frontend
+
+```bash
+pnpm dev
+```
+
+The app will run at:
+
+```text
+http://localhost:3000
+```
+
+### Build for production
+
+```bash
+pnpm build
+pnpm start
+```
+
+### Lint
+
+```bash
+pnpm lint
+```
+
+## Backend Contract
+
+The frontend assumes a backend with these behaviors:
+
+- WebSocket endpoint: `/ws/game/{game_id}`
+- query params:
+  - `mode=player` or `mode=bot`
+  - optional `color=w|b`
+- color assignment message:
+
+```json
+{
+  "type": "COLOR_ASSIGNED",
+  "color": "w"
+}
+```
+
+- move payload sent by frontend:
+
+```json
+{
+  "move": "e2e4",
+  "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+}
+```
+
+- engine response payload:
+
+```json
+{
+  "type": "ENGINE_MOVE",
+  "move": "e7e5"
+}
+```
+
+- reset payload:
+
+```json
+{
+  "type": "RESET"
+}
+```
+
+Without a compatible backend, the board UI will load, but live synchronization and bot play will not function.
+
+## Useful Commands
+
+```bash
+pnpm dev
+pnpm build
+pnpm start
+pnpm lint
+```
