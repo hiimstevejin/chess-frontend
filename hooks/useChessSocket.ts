@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useChessStore } from "@/store/useChessStore";
+import { getBackendWebSocketBaseUrl } from "@/lib/backend";
 
 export const useChessSocket = (
   gameId: string,
@@ -13,8 +14,9 @@ export const useChessSocket = (
   useEffect(() => {
     setStatus("connecting");
     const colorParam = initialColor ? `&color=${initialColor}` : "";
+    const backendWebSocketBaseUrl = getBackendWebSocketBaseUrl();
     const ws = new WebSocket(
-      `ws://127.0.0.1:8000/ws/game/${gameId}?mode=${mode}${colorParam}`,
+      `${backendWebSocketBaseUrl}/ws/game/${gameId}?mode=${mode}${colorParam}`,
     );
     socketRef.current = ws;
 

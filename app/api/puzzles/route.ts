@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_API_BASE_URL =
-  process.env.BACKEND_API_BASE_URL ??
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  "http://127.0.0.1:8000";
+import { getBackendApiBaseUrl } from "@/lib/backend";
 
 export async function GET(request: NextRequest) {
+  const backendApiBaseUrl = getBackendApiBaseUrl();
   const params = new URLSearchParams();
   const page = request.nextUrl.searchParams.get("page");
   const limit = request.nextUrl.searchParams.get("limit") ?? "24";
@@ -19,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(
-      `${BACKEND_API_BASE_URL}/api/puzzles?${params.toString()}`,
+      `${backendApiBaseUrl}/api/puzzles?${params.toString()}`,
       {
         cache: "no-store",
       },
