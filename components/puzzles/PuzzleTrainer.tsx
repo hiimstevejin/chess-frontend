@@ -25,7 +25,19 @@ interface FeedbackState {
   message: string;
 }
 
+interface PuzzleResponse {
+  page?: number;
+  limit?: number;
+  total?: number;
+  total_pages?: number;
+  has_next?: boolean;
+  has_prev?: boolean;
+  count?: number;
+  items?: PuzzleRecord[];
+}
+
 const PUZZLES_API_PATH = "/api/puzzles";
+const DEFAULT_LIMIT = 24;
 
 function normalizeMove(move: { from: string; to: string; promotion?: string }) {
   return `${move.from}${move.to}${move.promotion ?? ""}`;
@@ -37,6 +49,15 @@ export default function PuzzleTrainer() {
 
   const [puzzles, setPuzzles] = useState<PuzzleRecord[]>([]);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalPuzzles, setTotalPuzzles] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrev, setHasPrev] = useState(false);
+  const [minRatingInput, setMinRatingInput] = useState("");
+  const [maxRatingInput, setMaxRatingInput] = useState("");
+  const [appliedMinRating, setAppliedMinRating] = useState("");
+  const [appliedMaxRating, setAppliedMaxRating] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fen, setFen] = useState(chessRef.current.fen());
@@ -63,7 +84,16 @@ export default function PuzzleTrainer() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`${PUZZLES_API_PATH}?limit=24`);
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(DEFAULT_LIMIT),
+        });
+        if (appliedMinRating) params.set("min_rating", appliedMinRating);
+        if (appliedMaxRating) params.set("max_rating", appliedMaxRating);
+
+        const response = await fetch(
+          `${PUZZLES_API_PATH}?${params.toString()}`,
+        );
 
         if (!response.ok) {
           const payload: { error?: string } = await response
@@ -74,12 +104,19 @@ export default function PuzzleTrainer() {
           );
         }
 
-        const data: { items?: PuzzleRecord[] } = await response.json();
+        const data: PuzzleResponse = await response.json();
         const nextPuzzles = data.items ?? [];
         setPuzzles(nextPuzzles);
+        setPage(data.page ?? page);
+        setTotalPages(Math.max(1, data.total_pages ?? 1));
+        setTotalPuzzles(data.total ?? nextPuzzles.length);
+        setHasNext(Boolean(data.has_next));
+        setHasPrev(Boolean(data.has_prev));
 
         if (nextPuzzles.length > 0) {
           setSelectedPuzzleId(nextPuzzles[0].puzzle_id);
+        } else {
+          setSelectedPuzzleId(null);
         }
       } catch (fetchError) {
         const message =
@@ -93,7 +130,7 @@ export default function PuzzleTrainer() {
     }
 
     loadPuzzles();
-  }, []);
+  }, [appliedMaxRating, appliedMinRating, page]);
 
   useEffect(() => {
     if (boardRef.current) {
@@ -310,6 +347,31 @@ export default function PuzzleTrainer() {
     setPendingPromotion(null);
   }
 
+  function applyRatingFilters() {
+    if (
+      minRatingInput &&
+      maxRatingInput &&
+      Number(minRatingInput) > Number(maxRatingInput)
+    ) {
+      setError("Minimum Elo cannot be greater than maximum Elo.");
+      return;
+    }
+
+    setError(null);
+    setAppliedMinRating(minRatingInput);
+    setAppliedMaxRating(maxRatingInput);
+    setPage(1);
+  }
+
+  function clearRatingFilters() {
+    setError(null);
+    setMinRatingInput("");
+    setMaxRatingInput("");
+    setAppliedMinRating("");
+    setAppliedMaxRating("");
+    setPage(1);
+  }
+
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 text-white lg:px-8">
       <div className="flex flex-col gap-2">
@@ -342,12 +404,60 @@ export default function PuzzleTrainer() {
                 Puzzles
               </h2>
               <span className="text-xs text-slate-500">
-                {puzzles.length} loaded
+                {totalPuzzles.toLocaleString()} total
               </span>
             </div>
 
+            <div className="mb-3 rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">
+                  Elo
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  value={minRatingInput}
+                  onChange={(event) => setMinRatingInput(event.target.value)}
+                  className="min-w-0 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-400"
+                  placeholder="Min"
+                />
+                <span className="text-slate-600">-</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={maxRatingInput}
+                  onChange={(event) => setMaxRatingInput(event.target.value)}
+                  className="min-w-0 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-400"
+                  placeholder="Max"
+                />
+              </div>
+
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={applyRatingFilters}
+                  className="rounded-md bg-sky-500 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+                >
+                  Go
+                </button>
+                <button
+                  type="button"
+                  onClick={clearRatingFilters}
+                  className="rounded-md border border-slate-700 px-2.5 py-1.5 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <p className="mt-2 text-[11px] text-slate-500">
+                {appliedMinRating || appliedMaxRating
+                  ? `Active: ${appliedMinRating || "Any"}-${appliedMaxRating || "Any"}`
+                  : "Active: Any rating"}
+              </p>
+            </div>
+
             <div
-              className="max-h-[70vh] space-y-2 overflow-y-auto pr-1 [scrollbar-color:#38bdf8_#0f172a] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-[3px] [&::-webkit-scrollbar-thumb]:border-solid [&::-webkit-scrollbar-thumb]:border-slate-950 [&::-webkit-scrollbar-thumb]:bg-sky-400/70 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-900/80 [&::-webkit-scrollbar]:w-3"
+              className="max-h-[50vh] space-y-2 overflow-y-auto pr-1 [scrollbar-color:#38bdf8_#0f172a] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-[3px] [&::-webkit-scrollbar-thumb]:border-solid [&::-webkit-scrollbar-thumb]:border-slate-950 [&::-webkit-scrollbar-thumb]:bg-sky-400/70 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-900/80 [&::-webkit-scrollbar]:w-3"
               style={{
                 msOverflowStyle: "auto",
               }}
@@ -383,6 +493,30 @@ export default function PuzzleTrainer() {
                   </button>
                 );
               })}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-800 pt-4">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={!hasPrev || loading}
+                className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                Page {page} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setPage((current) => Math.min(totalPages, current + 1))
+                }
+                disabled={!hasNext || loading}
+                className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
             </div>
           </aside>
 

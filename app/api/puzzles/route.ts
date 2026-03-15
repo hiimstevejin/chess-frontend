@@ -6,11 +6,20 @@ const BACKEND_API_BASE_URL =
   "http://127.0.0.1:8000";
 
 export async function GET(request: NextRequest) {
+  const params = new URLSearchParams();
+  const page = request.nextUrl.searchParams.get("page");
   const limit = request.nextUrl.searchParams.get("limit") ?? "24";
+  const minRating = request.nextUrl.searchParams.get("min_rating");
+  const maxRating = request.nextUrl.searchParams.get("max_rating");
+
+  params.set("limit", limit);
+  if (page) params.set("page", page);
+  if (minRating) params.set("min_rating", minRating);
+  if (maxRating) params.set("max_rating", maxRating);
 
   try {
     const response = await fetch(
-      `${BACKEND_API_BASE_URL}/api/puzzles?limit=${encodeURIComponent(limit)}`,
+      `${BACKEND_API_BASE_URL}/api/puzzles?${params.toString()}`,
       {
         cache: "no-store",
       },
