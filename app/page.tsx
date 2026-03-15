@@ -40,7 +40,7 @@ export default function Home() {
             primaryText="Solve"
             hoverText="Puzzle"
             icon={<ChessKnight />}
-            onClick={() => console.log("clicked puzzle")}
+            onClick={() => router.push("/puzzles")}
           />
         </div>
 
