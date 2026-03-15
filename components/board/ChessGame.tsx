@@ -133,13 +133,16 @@ export default function ChessGame({
     }
   };
 
+  const boardOrientation: "black" | "white" =
+    playerColor === "b" ? "black" : "white";
+
   const chessboardOptions = {
     id: "play-vs-random",
     position: fen,
     onPieceDrop,
     onSquareClick,
     squareStyles: optionSquares,
-    boardOrientation: (playerColor === "b" ? "black" : "white") as const,
+    boardOrientation,
     arePiecesDraggable: isPlayerTurn,
   };
 

@@ -28,7 +28,6 @@ export default function PuzzleTrainer() {
     hasPrev,
     hint,
     history,
-    isPlayerTurn,
     isSolved,
     loading,
     maxRatingInput,
@@ -137,7 +136,9 @@ export default function PuzzleTrainer() {
                   </p>
                   <div className="flex items-center gap-2">
                     <h2 className="text-xl font-semibold text-white">
-                      {selectedPuzzle ? `#${selectedPuzzle.themes}` : "No puzzle"}
+                      {selectedPuzzle
+                        ? `#${selectedPuzzle.themes}`
+                        : "No puzzle"}
                     </h2>
                     {selectedPuzzle && (
                       <button
@@ -184,12 +185,15 @@ export default function PuzzleTrainer() {
                       targetSquare,
                       piece,
                     }: PieceDropHandlerArgs) =>
-                      onPieceDrop(sourceSquare, targetSquare, piece.pieceType),
+                      onPieceDrop(
+                        sourceSquare,
+                        targetSquare ?? undefined,
+                        piece.pieceType,
+                      ),
                     onSquareClick: ({ square, piece }: SquareHandlerArgs) =>
-                      onSquareClick(square, piece?.pieceType),
+                      onSquareClick(square ?? undefined, piece?.pieceType),
                     squareStyles: optionSquares,
                     boardOrientation: playerColor === "b" ? "black" : "white",
-                    arePiecesDraggable: isPlayerTurn && !isSolved,
                   }}
                 />
                 <PromotionSelection
