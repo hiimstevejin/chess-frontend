@@ -26,6 +26,11 @@ interface FeedbackState {
   message: string;
 }
 
+interface HintState {
+  visible: boolean;
+  move: string | null;
+}
+
 interface PuzzleResponse {
   page?: number;
   limit?: number;
@@ -100,6 +105,10 @@ export default function PuzzleTrainer() {
   const [feedback, setFeedback] = useState<FeedbackState>({
     tone: "neutral",
     message: "Choose a puzzle to begin.",
+  });
+  const [hint, setHint] = useState<HintState>({
+    visible: false,
+    move: null,
   });
   const [boardWidth, setBoardWidth] = useState(0);
 
@@ -207,6 +216,10 @@ export default function PuzzleTrainer() {
     setPlayerColor(chess.turn());
     setSolutionMoves(moves);
     setSolutionIndex(Math.min(1, moves.length));
+    setHint({
+      visible: false,
+      move: moves[1] ?? null,
+    });
     setFeedback({
       tone: "neutral",
       message:
@@ -286,6 +299,10 @@ export default function PuzzleTrainer() {
     setOptionSquares({});
     setFeedback(nextFeedback);
     setSolutionIndex(nextIndex);
+    setHint({
+      visible: false,
+      move: solutionMoves[nextIndex] ?? null,
+    });
   }
 
   function tryMove(source: string, target: string, promotion = "q") {
@@ -413,6 +430,13 @@ export default function PuzzleTrainer() {
     setAppliedMinRating("");
     setAppliedMaxRating("");
     setPage(1);
+  }
+
+  function revealHint() {
+    setHint({
+      visible: true,
+      move: solutionMoves[solutionIndex] ?? null,
+    });
   }
 
   function toggleStarredPuzzle(puzzle: PuzzleRecord) {
@@ -747,6 +771,28 @@ export default function PuzzleTrainer() {
                     {isSolved ? "Solved" : "Active"}
                   </p>
                 </div>
+              </div>
+              <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                    Hint
+                  </p>
+                  <button
+                    type="button"
+                    onClick={revealHint}
+                    disabled={!hint.move || isSolved}
+                    className="rounded-md border border-slate-700 px-2.5 py-1 text-xs font-medium text-slate-300 transition hover:border-slate-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Show move
+                  </button>
+                </div>
+                <p className="mt-2 text-sm text-slate-300">
+                  {isSolved
+                    ? "Puzzle complete."
+                    : hint.visible && hint.move
+                      ? `Next move: ${hint.move}`
+                      : "Reveal the next move if you get stuck."}
+                </p>
               </div>
             </div>
 
