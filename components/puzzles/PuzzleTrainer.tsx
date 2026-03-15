@@ -346,7 +346,12 @@ export default function PuzzleTrainer() {
               </span>
             </div>
 
-            <div className="max-h-[70vh] space-y-2 overflow-y-auto pr-1">
+            <div
+              className="max-h-[70vh] space-y-2 overflow-y-auto pr-1 [scrollbar-color:#38bdf8_#0f172a] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-[3px] [&::-webkit-scrollbar-thumb]:border-solid [&::-webkit-scrollbar-thumb]:border-slate-950 [&::-webkit-scrollbar-thumb]:bg-sky-400/70 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-900/80 [&::-webkit-scrollbar]:w-3"
+              style={{
+                msOverflowStyle: "auto",
+              }}
+            >
               {puzzles.map((puzzle) => {
                 const isSelected = puzzle.puzzle_id === selectedPuzzleId;
 
