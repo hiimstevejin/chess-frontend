@@ -1,10 +1,3 @@
-_________ .__                           .___        _____       
-\_   ___ \|  |__   ____   ______ ______ |   | _____/ ____\____  
-/    \  \/|  |  \_/ __ \ /  ___//  ___/ |   |/    \   __\/  _ \ 
-\     \___|   Y  \  ___/ \___ \ \___ \  |   |   |  \  | (  <_> )
- \______  /___|  /\___  >____  >____  > |___|___|  /__|  \____/ 
-        \/     \/     \/     \/     \/           \/             
-
 ## Overview
 
 Chess Info is a Next.js frontend for real-time chess play. It provides a landing page to create or join a game, a board page for live play, and WebSocket integration for either human-vs-human games or games against a backend engine.
